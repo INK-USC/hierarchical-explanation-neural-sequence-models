@@ -74,7 +74,7 @@ python -m bert.run_classifier \
 
 Then train a language model on BERT-tokenized inputs, and run explanations. Simply add the `--use_bert_tokenizer` and `--explain_model bert` flag to all the experiments above for LSTM.
 
-Note that you need to filter out subtrees in train.tsv if you would are interested in evaluating explanations.
+Note that you need to filter out subtrees in train.tsv if you are interested in evaluating explanations.
 
 ## Evaluating explanations
 
@@ -90,7 +90,7 @@ unzip ./.data/stanfordSentimentTreebank.zip -d ./.data/
 mv ./.data/stanfordSentimentTreebank ./.data/sst_raw
 ```
 
-Then the evaluation script:
+Then run the evaluation script:
 ```shell script
 python eval_explanations.py --eval_file outputs/soc${exp_name}.txt
 ```
