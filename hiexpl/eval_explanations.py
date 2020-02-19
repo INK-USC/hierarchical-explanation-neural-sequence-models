@@ -138,7 +138,7 @@ def unigram_linear_pearson_bert_tree(filename, dataset='dev'):
                     coeff_dict[word] = coeff
                 total += 1
     p = np.corrcoef(out, truth)
-    print('word_corr', '%d/%d' % (valid, total))
+    print('word_corr', p[1,0])
 
     out_2, truth_2 = [], []
     for k in scores_dict:
