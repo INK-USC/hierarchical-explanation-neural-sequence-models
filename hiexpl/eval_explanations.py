@@ -8,6 +8,7 @@ import csv, pickle
 from collections import defaultdict
 from utils.args import get_best_snapshot
 from nns.linear_model import BOWRegression, BOWRegressionMulti
+import argparse
 
 args = get_args()
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True, cache_dir='bert/cache')
@@ -284,16 +285,16 @@ if __name__ == '__main__':
     MAXLINE = 50
     OFFSET = 0
     DATASET = 'test'
-    #path = 'outputs/sst/soc_results/soc.soc.debug.noiselm.txt'
-    #path ='outputs/sst/soc_results/soc.soc.debug.noiselm.txt'
-    path = 'outputs/sst/cd_bert/scd.scd.debug.txt'
+    path = args.eval_file
     BERT = 'bert' in path
     TASK = ''
+
     for possible_task in ['sst','yelp','tacred']:
         if possible_task in path:
             TASK = possible_task
             break
     VOCAB = None
+
 
     if TASK == 'sst':
         args.bow_snapshot = get_best_snapshot('models/sst_bow')
