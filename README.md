@@ -80,7 +80,7 @@ Note that you need to filter out subtrees in train.tsv if you are interested in 
 
 To evaluate word level explanation, a BOW linear classifier is required.
 ```shell script
-python -m nns.linear_model --task sst --save_path models/${model_path} --no_subtrees
+python -m nns.linear_model --task sst --save_path models/${model_path}
 ```
 
 For evaluation of phrase level explanation, you also need to download the original SST dataset.
