@@ -68,7 +68,7 @@ python -m bert.run_classifier \
   --max_seq_length 128 \
   --train_batch_size 32 \
   --learning_rate 2e-5 \
-  --num_train_epochs 1 \
+  --num_train_epochs 3 \
   --output_dir bert/models_sst 
 ```
 
