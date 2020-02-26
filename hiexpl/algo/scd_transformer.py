@@ -51,11 +51,12 @@ class SCDForTransformer(SOCForTransformer):
             else:
                 break
 
-        # mask everything outside the x_region
+        # mask everything outside the x_region and inside nb region
         inp_lm = copy.copy(inp)
         for i in range(len(inp_lm)):
-            if not x_region[0] <= i <= x_region[1]:
-                inp_lm[i] = 1
+            if nb_region[0] <= i <= nb_region[1] and not x_region[0] <= i <= x_region[1]:
+                inp_lm[i] = self.tokenizer.vocab['[PAD]']
+                
         if not args.task == 'tacred':
             inp_th = torch.from_numpy(
                 bert_id_to_lm_id(inp_lm[1:inp_length - 1], self.tokenizer, self.vocab)).long().view(-1, 1)
