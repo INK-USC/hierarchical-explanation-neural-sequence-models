@@ -105,7 +105,7 @@ def draw_tree_from_line(s, tree_s):
             layers[layer] = []
         layers[layer].append(entry)
 
-    #layers = compact_layer(layers)
+    layers = compact_layer(layers)
 
     score_array = []
 
