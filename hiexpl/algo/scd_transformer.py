@@ -127,52 +127,6 @@ class SCDForTransformer(SOCForTransformer):
         global_state_dict.init_fetch_states()
         return
 
-    def get_states_bert_lm(self, inp, inp_mask, segment_ids, x_regions, nb_regions):
-        x_region = x_regions[0]
-        nb_region = nb_regions[0]
-        max_sample_length = (self.nb_range + 1) if self.nb_method == 'ngram' else (inp.size(0) + 1)
-
-        fw_pos = min(x_region[1] + 1, len(inp) - 1)
-        bw_pos = nb_region[0]
-
-        inp_masked = copy.copy(inp)
-        # mask input nb region with [MASK]
-        for i in range(nb_region[0], nb_region[1] + 1):
-            if i < x_region[0] or i > x_region[1]:
-                inp_masked[i] = self.tokenizer.vocab.get('[MASK]')
-
-        inp_masked = torch.from_numpy(inp_masked).long().to(self.gpu)
-        inp_masked_mask = torch.from_numpy(inp_mask).long().to(self.gpu)
-        segment_ids = segment_ids.to(self.gpu)
-        samples = self.bert_lm.gibbs_sampling_k(inp_masked.view(1, -1), segment_ids.view(1, -1),
-                                                inp_masked_mask.view(1, -1), fw_pos, bw_pos,
-                                                max_sample_length, self.sample_num)
-
-        inp_ex, inp_enb = [], []
-
-        for sample_i in range(self.sample_num):
-            filled_inp = samples[sample_i].cpu().numpy().tolist()
-            inp_enb.append(filled_inp)
-
-        inp_enb = np.stack(inp_enb)
-        inp_enb = torch.from_numpy(inp_enb).long()
-        inp_enb_mask = torch.from_numpy(inp_mask).long()
-
-        if self.gpu >= 0:
-            inp_enb = inp_enb.to(self.gpu)
-            inp_enb_mask = inp_enb_mask.to(self.gpu)
-            segment_ids = segment_ids.to(self.gpu)
-
-        inp_enb_mask = inp_enb_mask.expand(inp_enb.size(0), -1)
-        segment_ids = segment_ids.expand(inp_enb.size(0), -1)
-
-        global_state_dict.init_store_states()
-        self.model.predict_and_explain(inp_enb, [[x_region]] * inp_enb.size(0),
-                                       segment_ids[:, :inp_enb.size(1)], inp_enb_mask)
-
-        global_state_dict.init_fetch_states()
-        return
-
     def explain_single_transformer(self, input_ids, input_mask, segment_ids, region, label=None):
         inp_flatten = input_ids.view(-1).cpu().numpy()
         inp_mask_flatten = input_mask.view(-1).cpu().numpy()
@@ -187,10 +141,7 @@ class SCDForTransformer(SOCForTransformer):
         global_state_dict.total_span_len = total_len
         global_state_dict.rel_span_len = span_len
 
-        if self.use_bert_lm:
-            self.get_states_bert_lm(inp_flatten, inp_mask_flatten, segment_ids, [region], mask_regions)
-        else:
-            self.get_states(inp_flatten, inp_mask_flatten, segment_ids, [region], mask_regions)
+        self.get_states(inp_flatten, inp_mask_flatten, segment_ids, [region], mask_regions)
         if self.gpu >= 0:
             input_ids, input_mask, segment_ids = input_ids.to(self.gpu), input_mask.to(self.gpu), segment_ids.to(
                 self.gpu)
