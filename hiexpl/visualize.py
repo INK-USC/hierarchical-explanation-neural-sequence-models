@@ -105,7 +105,7 @@ def draw_tree_from_line(s, tree_s):
             layers[layer] = []
         layers[layer].append(entry)
 
-    layers = compact_layer(layers)
+    #layers = compact_layer(layers)
 
     score_array = []
 
@@ -139,8 +139,12 @@ def visualize_tab(tab_file_dir, model_name, method_name):
         sent_words = entry['text'].split()
         score_array = entry['tab']
         label_name = entry['label']
+        pred_score = entry['pred']
         if score_array.ndim == 1:
             score_array = score_array.reshape(1,-1)
+        # append full prediction
+        row_pred_score = np.full((1,score_array.shape[1]),pred_score)
+        score_array = np.concatenate([score_array, row_pred_score], 0)
         if score_array.shape[1] <= 400:
             im = plot_score_array(None, score_array, sent_words)
             plt.title(label_name)

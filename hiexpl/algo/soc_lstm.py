@@ -75,9 +75,13 @@ class ExplanationBase:
 
     def mask_region(self, inp, region_indicator, mask_value):
         new_seq = []
+        flg = False
         for i in range(len(region_indicator)):
             if region_indicator[i] not in mask_value:
                 new_seq.append(inp[i])
+            elif region_indicator[i] == 1 and not flg:
+                new_seq.append(1)
+                # flg = True
             else:
                 new_seq.append(1)
         new_seq = np.array(new_seq)
@@ -210,18 +214,18 @@ class ExplanationBase:
         return all_contribs
 
     def explain_agg(self, dataset):
-        f = open(self.output_path, 'wb')
+        f = open(self.output_path.replace('.txt','.pkl'), 'wb')
         all_tabs = []
 
         for batch_idx, batch in enumerate(self.iterator):
             if batch_idx < self.batch_start:
                 continue
+            pred_logits = self.model(batch)
+            _, pred = torch.max(pred_logits, -1)
+
             if dataset == 'tacred':
                 if batch.label.item() == 0:
                     continue
-
-                pred_logits = self.model(batch)
-                _, pred = torch.max(pred_logits, -1)
                 if pred.item() != batch.label.item():
                     continue
             # note: method='cd' has no effect
@@ -237,7 +241,9 @@ class ExplanationBase:
             all_tabs.append({
                 'tab': data,
                 'text': text,
-                'label': label_name
+                'label': label_name,
+                'pred': normalize_logit(pred_logits, batch.label).item() if batch.label.size(1) != 2 else
+                 pred_logits[:, 0] - pred_logits[:, 1] # [B]
             })
             print('finished %d' % batch_idx)
 

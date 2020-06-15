@@ -155,6 +155,7 @@ class ExplanationBaseForTransformer(ExplanationBase):
                 [(max(0, region[0]), min(region[1] + self.nb_range, idx - 1))]
 
     def explain_single_transformer(self, input_ids, input_mask, segment_ids, region, label=None):
+
         inp_flatten = input_ids.view(-1).cpu().numpy()
         inp_mask_flatten = input_mask.view(-1).cpu().numpy()
         mask_regions = self.get_ngram_mask_region(region, inp_flatten)
@@ -196,7 +197,17 @@ class ExplanationBaseForTransformer(ExplanationBase):
 
         scores = []
         for (start, stop) in zip(starts, stops):
-            score = self.explain_single_transformer(*inputs, region=[start, stop], label=label)
+            # filter the case when start covers CLS
+            if start == 0:
+                start = 1
+            # filter the case when stop covers SEP
+            if stop == text_len - 1:
+                stop = text_len - 2
+            # if start > stop, then return 0 (e.g. score for word CLS, SEP)
+            if start > stop:
+                score = 0
+            else:
+                score = self.explain_single_transformer(*inputs, region=[start, stop], label=label)
             scores.append(score)
 
         # threshold scores
@@ -233,7 +244,17 @@ class ExplanationBaseForTransformer(ExplanationBase):
                 starts, stops = tiles_to_cd(tiles_concat)
                 scores_all = []
                 for (start, stop) in zip(starts, stops):
-                    score = self.explain_single_transformer(*inputs, region=[start, stop], label=label)
+                    # filter the case when start covers CLS
+                    if start == 0:
+                        start = 1
+                    # filter the case when stop covers SEP
+                    if stop == text_len - 1:
+                        stop = text_len - 2
+                    # if start > stop, then return 0 (e.g. score for word CLS, SEP)
+                    if start > stop:
+                        score = 0
+                    else:
+                        score = self.explain_single_transformer(*inputs, region=[start, stop], label=label)
                     scores_all.append(score)
 
                 score_comp = np.copy(scores_all[0])
@@ -313,7 +334,7 @@ class ExplanationBaseForTransformer(ExplanationBase):
         return all_contribs
 
     def explain_agg(self, dataset):
-        f = open(self.output_path, 'wb')
+        f = open(self.output_path.replace('.txt','.pkl'), 'wb')
         all_tabs = []
 
         for batch_idx, (input_ids, input_mask, segment_ids, label_ids, offsets, mappings) in enumerate(self.iterator):
@@ -335,12 +356,14 @@ class ExplanationBaseForTransformer(ExplanationBase):
             seq_len = lists['scores_list'][0].shape[0]
             data = lists_to_tabs(lists, seq_len)
             text = ' '.join(self.tokenizer.convert_ids_to_tokens(inp)[:seq_len])
-            label_name = self.label_vocab.itos[label_ids.item()]
+            label_name = self.label_vocab.itos[label_ids.item()] if self.label_vocab is not None else label_ids.item()
             all_tabs.append({
                 'tab': data,
                 'text': text,
-                'label': label_name
-            })
+                'label': label_name,
+                'pred': normalize_logit(logits, label_ids).item() if logits.size(1) != 2 else
+                        logits[:, 1] - logits[:, 0] # [B]
+                 })
             print('finished %d' % batch_idx)
 
             if batch_idx >= self.batch_stop - 1:
@@ -377,7 +400,6 @@ class ExplanationBaseForTransformer(ExplanationBase):
             for span in range(length - 2):
                 if type(span) is int:
                     span = (span, span)
-                # bert_span = self.map_lm_to_bert_token(span[0], mappings)[0], self.map_lm_to_bert_token(span[1], mappings)[1]
                 bert_span = span
                 # add 1 to spans since transformer inputs has [CLS]
                 repr_spans.append(bert_span)
@@ -521,13 +543,15 @@ class SOCForTransformer(ExplanationBaseForTransformer):
             inp_enb.append(filled_inp)
 
             filled_ex, mask_ex = [], []
+            flg = False
             for i in range(len(filled_inp)):
                 if not x_region[0] <= i <= x_region[1]:
                     filled_ex.append(filled_inp[i])
                     mask_ex.append(inp_mask[i])
-                else:
+                elif not flg:
                     filled_ex.append(self.tokenizer.vocab['[PAD]'])
                     mask_ex.append(inp_mask[i])
+                    # flg = True
             filled_ex = np.array(filled_ex, dtype=np.int32)
             mask_ex = np.array(mask_ex, dtype=np.int32)
             inp_ex.append(filled_ex)
@@ -560,6 +584,7 @@ class SOCForTransformer(ExplanationBaseForTransformer):
     def explain_single_transformer(self, input_ids, input_mask, segment_ids, region, label=None):
         inp_flatten = input_ids.view(-1).cpu().numpy()
         inp_mask_flatten = input_mask.view(-1).cpu().numpy()
+
         if self.nb_method == 'ngram':
             mask_regions = self.get_ngram_mask_region(region, inp_flatten)
         else:
