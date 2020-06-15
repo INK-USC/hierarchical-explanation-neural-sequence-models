@@ -1,7 +1,6 @@
 # Hierarchical Explanations for Neural Sequence Model Predictions
 
-This repo include implementation of SOC and SCD algorithm, scripts for visualization and evaluation. **The code clean-up is still in progress.**
-
+This repo include implementation of SOC and SCD algorithm, scripts for visualization and evaluation.
 Paper: [Towards Hierarchical Importance Attribution: Explaining Compositional Semantics for Neural Sequence Models](https://openreview.net/pdf?id=BkxRRkSKwr), ICLR 2020.
 
 ## Installation
