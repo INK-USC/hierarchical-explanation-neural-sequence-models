@@ -148,7 +148,7 @@ def visualize_tab(tab_file_dir, model_name, method_name):
         if score_array.shape[1] <= 400:
             im = plot_score_array(None, score_array, sent_words)
             plt.title(label_name)
-            plt.savefig('figs/fig{}_{}/{}'.format(model_name, method_name, i), bbox_inches='tight')
+            plt.savefig('figs/{}_{}/fig_{}'.format(model_name, method_name, i), bbox_inches='tight')
             plt.close()
 
 if __name__ == '__main__':

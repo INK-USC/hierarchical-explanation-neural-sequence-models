@@ -202,7 +202,7 @@ if __name__ == '__main__':
         model = LSTMMeanSentiment(config, match_length=True)
     elif args.task == 'tacred':
         model = LSTMMeanRE(config, match_length=True)
-        model.init_weights(inputs.vocab)
+        model.init_weights()
     if args.word_vectors:
         model.embed.weight.data.copy_(inputs.vocab.vectors)
     if config.use_gpu:
