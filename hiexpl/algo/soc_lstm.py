@@ -242,7 +242,7 @@ class ExplanationBase:
                 'tab': data,
                 'text': text,
                 'label': label_name,
-                'pred': normalize_logit(pred_logits, batch.label).item() if batch.label.size(1) != 2 else
+                'pred': normalize_logit(pred_logits, batch.label).item() if (hasattr(batch, 'label') and batch.label.size(1) != 2) else
                  pred_logits[:, 0] - pred_logits[:, 1] # [B]
             })
             print('finished %d' % batch_idx)
