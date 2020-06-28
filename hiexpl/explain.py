@@ -49,6 +49,10 @@ if __name__ == '__main__':
 
     if args.task == 'tacred':
         args.label_vocab = label_field.vocab
+        args.pos_size = len(pos.vocab)
+        args.ner_size = len(ner.vocab)
+        args.offset_emb_dim = 30
+
 
     args.n_embed = len(text_field.vocab)
     args.d_out = 2 if args.task in ['sst','yelp'] else len(label_field.vocab)
